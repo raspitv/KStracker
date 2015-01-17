@@ -4,7 +4,11 @@ from urllib2 import Request, urlopen, URLError
 from time import sleep          # we need sleep for a delay between readings
 pc='%'                          # I find defining % as a variable avoids confusion
 
-def scan():                     # we've put all the page scanning bits into a function
+# Here we define the urls of the KS campaigns we want to track as a list
+urls =['https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
+       'https://www.kickstarter.com/projects/955730101/protocam-raspberry-pi-a-b-camera-module-add-on-boa']
+
+def scan(someurl):                     # we've put all the page scanning bits into a function
     req = Request(someurl)
     try:
         response = urlopen(req)
@@ -21,7 +25,7 @@ def scan():                     # we've put all the page scanning bits into a fu
         print '\033[34m\033[1m' + project_name + '\033[0m' # bold and blue title
         for line in the_page:
             if 'data-duration' in line:  # line 457
-                time_left = float(line.split('"')[5][:-2])
+                time_left = float(line.split('"')[5])
                 campaign_duration = float(line.split('"')[1])
                 hours_into_campaign = (24 * campaign_duration) - time_left
                 if time_left >= 24:
@@ -49,9 +53,7 @@ def scan():                     # we've put all the page scanning bits into a fu
         amount_per_hour = float(amount_raised[1]) / hours_into_campaign
         print '\033[33m\033[1m£/hr:\033[0m \033[1m\033[37m£%.2f \033[0m \n' % amount_per_hour
 
-
-        # Now we'll have a continuous loop which calls our function for each URL we define
-while True:      
-    someurl= 'https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone'
-    scan()
-    sleep(15)
+while True:          # continuous loop which calls our function for each URL we define
+    for url in urls:
+        scan(url)
+        sleep(15)
