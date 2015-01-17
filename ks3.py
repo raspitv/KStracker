@@ -22,6 +22,8 @@ def scan():                     # we've put all the page scanning bits into a fu
         for line in the_page:
             if 'data-duration' in line:  # line 457
                 time_left = float(line.split('"')[5][:-2])
+                campaign_duration = float(line.split('"')[1])
+                hours_into_campaign = (24 * campaign_duration) - time_left
                 if time_left >= 24:
                     time_left_unit = "days"
                     time_left = str(int(time_left / 24))
@@ -42,11 +44,14 @@ def scan():                     # we've put all the page scanning bits into a fu
                     if 'data-pledged' in word:
                         amount_raised = word.split('"')
                         print '\033[33m\033[1mTotal so far:\033[0m \033[1m\033[37m£%.2f\033[0m' % float(amount_raised[1])
-        print '\033[33m\033[1mTime left:\033[0m \033[1m\033[37m%s %s\033[0m \n' % (time_left, time_left_unit)
+        print '\033[33m\033[1mTime left:\033[0m \033[1m\033[37m%s %s\033[0m' % (time_left, time_left_unit)
+
+        amount_per_hour = float(amount_raised[1]) / hours_into_campaign
+        print '\033[33m\033[1m£/hr:\033[0m \033[1m\033[37m£%.2f \033[0m \n' % amount_per_hour
+
 
         # Now we'll have a continuous loop which calls our function for each URL we define
 while True:      
     someurl= 'https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone'
     scan()
     sleep(15)
-    # you can add more KS projects here by copying the above three lines and it will cycle between them
