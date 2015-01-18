@@ -34,7 +34,8 @@ def scan(someurl):                     # we've put all the page scanning bits in
                 else:
                     time_left_unit = "hours"
                     time_left = str(time_left)
-        
+            if 'data-backers-count' in line:
+                backers = int(line.split('"')[3])      
             if 'data-goal' in line:       # line 449
                 words = line.split(" ")
                 for word in words:
@@ -51,7 +52,9 @@ def scan(someurl):                     # we've put all the page scanning bits in
         print '\033[33m\033[1mTime left:\033[0m \033[1m\033[37m%s %s\033[0m' % (time_left, time_left_unit)
 
         amount_per_hour = float(amount_raised[1]) / hours_into_campaign
+        print '\033[33m\033[1mBackers:\033[0m \033[1m\033[37m%d \033[0m' % backers
         print '\033[33m\033[1m£/hr:\033[0m \033[1m\033[37m£%.2f \033[0m \n' % amount_per_hour
+
 
 while True:          # continuous loop which calls our function for each URL we define
     for url in urls:
