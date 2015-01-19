@@ -6,7 +6,8 @@ pc='%'                          # I find defining % as a variable avoids confusi
 logging_enabled = 1             # change to 0 to switch off logging
 
 # Here we list the urls of the KS campaigns we want to track
-urls =['https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
+urls =['https://www.kickstarter.com/projects/466895479/fuze-ti-fdc-timecode-slate',
+       'https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
        'https://www.kickstarter.com/projects/955730101/protocam-raspberry-pi-a-b-camera-module-add-on-boa']
 
 def log(project_name, target, percent, amount_raised, campaign_duration, 
@@ -60,22 +61,34 @@ def scan(someurl):                # page scanning function
                     if 'data-goal' in word:
                         target = word.split('"')
                             # bold and yellow for labels, bold and white for figures
-                        print '\033[33m\033[1mtarget:\033[0m \033[1m\033[37m£%.2f\033[0m' % float(target[1])
                     if 'data-percent-raised' in word:
                         percent = word.split('"')
-                        print '\033[33m\033[1mpercentage raised:\033[0m \033[1m\033[37m%.2f%s\033[0m' % ((float(percent[1]) * 100) , pc)
                     if 'data-pledged' in word:
                         amount_raised = word.split('"')
-                        print '\033[33m\033[1mTotal so far:\033[0m \033[1m\033[37m£%.2f\033[0m' % float(amount_raised[1])
+            if 'project_currency_code' in line: 
+                project_currency = line.split('"')[1]
+                project_currency = project_currency.split(' ')[1]
+                if project_currency == 'usd':
+                    project_currency = '$'
+                elif project_currency == 'gbp':
+                    project_currency = '£'
+                else:
+                    project_currency = '£' # we can add more currencies as needed
+        
+        print '\033[33m\033[1mtarget:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency,float(target[1]))        
+        print '\033[33m\033[1mpercentage raised:\033[0m \033[1m\033[37m%.2f%s\033[0m' % ((float(percent[1]) * 100) , pc)
+        print '\033[33m\033[1mTotal so far:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency, float(amount_raised[1]))   
         print '\033[33m\033[1mTime left:\033[0m \033[1m\033[37m%s %s\033[0m' % (time_left, time_left_unit)
 
         amount_per_hour = float(amount_raised[1]) / hours_into_campaign
         print '\033[33m\033[1mBackers:\033[0m \033[1m\033[37m%d \033[0m' % backers
-        print '\033[33m\033[1m£/hr:\033[0m \033[1m\033[37m£%.2f \033[0m \n' % amount_per_hour
+        print '\033[33m\033[1m%s/hr:\033[0m \033[1m\033[37m%s%.2f \033[0m \n' % (project_currency, project_currency, amount_per_hour)
+
         if (logging_enabled and counter % log_interval == 0):
             log(project_name, target[1], (float(percent[1]) * 100), amount_raised[1], 
                 campaign_duration, time_left, time_left_unit, backers, amount_per_hour,
                 hours_into_campaign)
+
 counter = 0
 log_interval = 10
 while True:          # continuous loop scans each URL we define
