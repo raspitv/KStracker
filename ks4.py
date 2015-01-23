@@ -10,6 +10,7 @@ file_path = ''                  # without it's name e.g. /home/pi/
 
 # Here we list the urls of the KS campaigns we want to track
 urls =['https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
+       'https://www.kickstarter.com/projects/ryanteckltd/raspberry-pi-debug-clip',
        'https://www.kickstarter.com/projects/955730101/protocam-raspberry-pi-a-b-camera-module-add-on-boa']
 
 if 'nolog' in sys.argv:
@@ -32,7 +33,10 @@ def log(project_name, target, percent, amount_raised, campaign_duration,
     # convert non-string variables to strings for writing to file
     percent = "%.2f" % percent
     hours_into_campaign = "%.3f" % hours_into_campaign
-    campaign_duration = str(campaign_duration)
+    if len(str(campaign_duration)) > 4:                   # restrict length stored
+        campaign_duration = "{:.4f}".format(campaign_duration)
+    else:
+        campaign_duration = str(campaign_duration)
     backers = str(backers)
     amount_per_hour = "%.2f" % amount_per_hour
     logfile = file_path + project_name + ".txt"
@@ -45,6 +49,7 @@ def log(project_name, target, percent, amount_raised, campaign_duration,
     log_data.close()     
 
 def scan(someurl):                # page scanning function
+    global logging_enabled
     req = Request(someurl)
     try:
         response = urlopen(req)
@@ -63,12 +68,18 @@ def scan(someurl):                # page scanning function
                 time_left = float(line.split('"')[5])
                 campaign_duration = float(line.split('"')[1])
                 hours_into_campaign = (24 * campaign_duration) - time_left
-                if time_left >= 24:
+                if time_left >= 72:
                     time_left_unit = "days"
                     time_left = str(int(time_left / 24))
-                else:
+                elif time_left >= 1:
                     time_left_unit = "hours"
-                    time_left = str(time_left)
+                    time_left = str(int(time_left))
+                elif 0 < time_left < 1:
+                    time_left_unit = "minutes"
+                    time_left = str(int(time_left * 60))
+                else:
+                    time_left_unit = ""
+                    logging_enabled = 0          # stop logging if campaign finished
             if 'data-backers-count' in line:
                 backers = int(line.split('"')[3])      
             if 'data-goal' in line:       # line 449
@@ -132,3 +143,4 @@ while True:          # continuous loop scans each URL we define
 # nolog nodis noloop, the program won't do anything with the KS page it scans.
 
 # If you want to run it from cron, you'll need to add the file_path (line 8)
+# e.g. /home/pi (but not the filename itself, just the path)
