@@ -5,8 +5,8 @@ from urllib2 import Request, urlopen, URLError
 from time import sleep          # we need sleep for a delay between readings
 import sys                      # we use sys for command line arguments
                                 # insert the path to your log file 
-file_path = ''                  # without it's name e.g. /home/pi/
-                                # not really needed unless running from cron
+#file_path = '/home/kstrack/'   # without it's name e.g. /home/pi/
+file_path = ''                  # not really needed unless running from cron
 
 # Here we list the urls of the KS campaigns we want to track
 urls =['https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
@@ -28,8 +28,21 @@ else:
 
 pc='%'                          # defining % as a variable avoids confusion
 
+def last_entry(project_name):                   # helps handle when a KS finishes
+    logfile = file_path + project_name + '.txt'
+    read_log = open(logfile, 'r') # open file for appending
+    log_contents = read_log.readlines()
+    read_log.close()
+    last_line = log_contents[-1]
+    time_left = int(last_line.split(',')[4])
+    if time_left == 0:
+        return 1
+    else:
+        return 0
+
 def log(project_name, target, percent, amount_raised, campaign_duration, 
-        time_left, time_left_unit, backers, amount_per_hour, hours_into_campaign):
+        time_left, time_left_unit, backers, amount_per_hour, hours_into_campaign, 
+        project_currency):
     # convert non-string variables to strings for writing to file
     percent = "%.2f" % percent
     hours_into_campaign = "%.3f" % hours_into_campaign
@@ -42,7 +55,8 @@ def log(project_name, target, percent, amount_raised, campaign_duration,
     logfile = file_path + project_name + ".txt"
 
     write_list = [target, percent, amount_raised, campaign_duration, time_left, 
-                  time_left_unit, backers, amount_per_hour, hours_into_campaign]
+                  time_left_unit, backers, amount_per_hour, hours_into_campaign,
+                  project_currency]
     write_string = ','.join(write_list) + '\n'
     log_data = open(logfile, 'a') # open file for appending
     log_data.write(write_string)
@@ -78,8 +92,11 @@ def scan(someurl):                # page scanning function
                     time_left_unit = "minutes"
                     time_left = str(int(time_left * 60))
                 else:
-                    time_left_unit = ""
-                    logging_enabled = 0          # stop logging if campaign finished
+                    time_left_unit = "seconds"
+                    time_left = str(int(time_left))
+                    if last_entry(project_name):
+                        logging_enabled = 0          # stop logging if campaign finished
+
             if 'data-backers-count' in line:
                 backers = int(line.split('"')[3])      
             if 'data-goal' in line:       # line 449
@@ -96,27 +113,27 @@ def scan(someurl):                # page scanning function
                 project_currency = line.split('"')[1]
                 project_currency = project_currency.split(' ')[1]
                 if project_currency == 'usd':
-                    project_currency = '$'
+                    project_currency_symbol = '$'
                 elif project_currency == 'gbp':
-                    project_currency = '£'
+                    project_currency_symbol = '£'
                 else:
-                    project_currency = '£' # we can add more currencies as needed
+                    project_currency_symbol = '£' # we can add more currencies as needed
 
         amount_per_hour = float(amount_raised[1]) / hours_into_campaign
 
         if display_enabled:
             print '\033[34m\033[1m' + project_name + '\033[0m' # bold and blue title
-            print '\033[33m\033[1mtarget:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency,float(target[1]))        
+            print '\033[33m\033[1mtarget:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency_symbol,float(target[1]))        
             print '\033[33m\033[1mpercentage raised:\033[0m \033[1m\033[37m%.2f%s\033[0m' % ((float(percent[1]) * 100) , pc)
-            print '\033[33m\033[1mTotal so far:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency, float(amount_raised[1]))   
+            print '\033[33m\033[1mTotal so far:\033[0m \033[1m\033[37m%s%.2f\033[0m' % (project_currency_symbol, float(amount_raised[1]))   
             print '\033[33m\033[1mTime left:\033[0m \033[1m\033[37m%s %s\033[0m' % (time_left, time_left_unit)
             print '\033[33m\033[1mBackers:\033[0m \033[1m\033[37m%d \033[0m' % backers
-            print '\033[33m\033[1m%s/hr:\033[0m \033[1m\033[37m%s%.2f \033[0m \n' % (project_currency, project_currency, amount_per_hour)
+            print '\033[33m\033[1m%s/hr:\033[0m \033[1m\033[37m%s%.2f \033[0m \n' % (project_currency_symbol, project_currency_symbol, amount_per_hour)
 
         if (logging_enabled and counter % log_interval == 0):
             log(project_name, target[1], (float(percent[1]) * 100), amount_raised[1], 
                 campaign_duration, time_left, time_left_unit, backers, amount_per_hour,
-                hours_into_campaign)
+                hours_into_campaign, project_currency)
 counter = 0
 log_interval = 10
 while True:          # continuous loop scans each URL we define
@@ -144,3 +161,4 @@ while True:          # continuous loop scans each URL we define
 
 # If you want to run it from cron, you'll need to add the file_path (line 8)
 # e.g. /home/pi (but not the filename itself, just the path)
+
