@@ -5,8 +5,8 @@ from time import sleep          # we need sleep for a delay between readings
 pc='%'                          # I find defining % as a variable avoids confusion
 
 # Here we define the urls of the KS campaigns we want to track as a list
-urls =['https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
-       'https://www.kickstarter.com/projects/955730101/protocam-raspberry-pi-a-b-camera-module-add-on-boa']
+urls =['https://www.kickstarter.com/projects/raspitv/raspio-duino-affordable-arduino-programming-on-ras',
+       'https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone']
 
 def scan(someurl):                     # we've put all the page scanning bits into a function
     req = Request(someurl)
