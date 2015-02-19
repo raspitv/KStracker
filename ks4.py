@@ -10,7 +10,6 @@ file_path = ''                  # not really needed unless running from cron
 
 # Here we list the urls of the KS campaigns we want to track
 urls =['https://www.kickstarter.com/projects/raspitv/raspio-duino-affordable-arduino-programming-on-ras',
-       'https://www.kickstarter.com/projects/pimoroni/flotilla-for-raspberry-pi-making-for-everyone',
        'https://www.kickstarter.com/projects/ryanteckltd/raspberry-pi-debug-clip']
 
 if 'nolog' in sys.argv:
